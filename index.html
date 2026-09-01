@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#ff9418">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="キッザニア🎖">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<title>キッザニア🎖 ファミリーマネージャー</title>
+<style>
+:root{--orange:#ff9418;--dark:#202020;--cream:#fff7ea;--line:#eadcc8;--green:#159447}
+*{box-sizing:border-box}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Yu Gothic",sans-serif;background:#fffaf3;color:var(--dark)}
+header{position:sticky;top:0;z-index:5;background:var(--orange);color:#fff;padding:14px 16px 12px;box-shadow:0 2px 8px #0002}
+h1{font-size:20px;margin:0 0 3px;font-weight:800}.sub{font-size:12px;opacity:.9}
+main{max-width:760px;margin:auto;padding:14px 14px 90px}.tabs{display:flex;gap:8px;margin-bottom:14px}.tab{flex:1;border:1px solid var(--line);background:#fff;border-radius:12px;padding:11px 6px;font-weight:700}.tab.active{background:#222;color:#fff}
+.card{background:#fff;border:1px solid var(--line);border-radius:16px;padding:15px;margin:10px 0;box-shadow:0 2px 8px #0000000b}
+.hero{background:linear-gradient(135deg,#fff1d7,#fff);border-color:#ffc56d}.big{font-size:30px;font-weight:900}.muted{color:#756d63;font-size:12px}
+h2{font-size:17px;margin:18px 0 8px}.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.stat{padding:14px;border-radius:14px;background:#fff;border:1px solid var(--line)}.stat b{font-size:24px;display:block}
+.row{display:flex;align-items:center;gap:10px}.grow{flex:1}.name{font-weight:750}.small{font-size:12px;color:#766}
+.bar{height:8px;background:#eee4d7;border-radius:99px;overflow:hidden;margin:8px 0}.fill{height:100%;background:var(--orange);border-radius:99px}
+button{font:inherit;cursor:pointer}.plus{width:42px;height:42px;border:0;border-radius:50%;background:var(--orange);color:white;font-size:25px;font-weight:800}.minus{width:34px;height:34px;border:1px solid var(--line);border-radius:50%;background:white}
+.done{color:var(--green);font-weight:800}.filter{width:100%;padding:12px;border:1px solid var(--line);border-radius:12px;background:#fff;margin-bottom:8px}
+.sectionTitle{display:flex;justify-content:space-between;align-items:center}.pill{display:inline-block;padding:3px 8px;border-radius:99px;background:#f5eadb;font-size:11px}
+.search{position:sticky;top:78px;z-index:4;background:#fffaf3;padding:6px 0}
+.foot{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid var(--line);padding:9px 14px calc(9px + env(safe-area-inset-bottom));text-align:center;font-size:11px;color:#777}
+.notice{font-size:12px;background:#fff4df;border-left:4px solid var(--orange);padding:10px;border-radius:8px;line-height:1.6}
+@media(max-width:520px){.grid{grid-template-columns:1fr}.tabs{position:sticky;top:78px;background:#fffaf3;padding:6px 0;z-index:3}}
+</style>
+</head>
+<body>
+<header>
+<h1>🎖 キッザニア称号マネージャー</h1>
+<div class="sub">キッザニア東京・ファミリー版</div>
+</header>
+<main>
+<div class="card" style="padding:10px 12px;margin-top:0">
+  <div class="small">いま記録している子</div>
+  <div class="row">
+    <select id="childSelect" class="filter" style="margin:4px 0 0;flex:1" onchange="switchChild(this.value)"></select>
+    <button onclick="addChild()" style="border:1px solid var(--line);background:#fff;border-radius:10px;padding:10px 12px;font-weight:700">＋追加</button>
+  </div>
+</div>
+<div class="tabs">
+<button class="tab active" onclick="show('home')">ホーム</button>
+<button class="tab" onclick="show('pro')">プロアクト</button>
+<button class="tab" onclick="show('exp')">エキスパート</button>
+</div>
+<div id="app"></div>
+</main>
+<div class="foot">データはこのiPhoneのブラウザ内に保存されます</div>
+<script>
+const DATA = {"proacts": [{"name": "パイロット", "need": 3}, {"name": "キャビンアテンダント", "need": 3}, {"name": "キッチンスタッフ", "need": 1}, {"name": "おもちゃ工場スタッフ", "need": 3}, {"name": "冷凍食品開発者", "need": 1}, {"name": "歯科医師", "need": 3}, {"name": "ウェイティングスタッフ", "need": 3}, {"name": "エンターテイナー／お笑いタイプ", "need": 3}, {"name": "エンターテイナー／スペースショー", "need": 1}, {"name": "バレエダンサー", "need": 3}, {"name": "ファッションモデル", "need": 3}, {"name": "ソフトクリームショップのお客さん", "need": 1}, {"name": "石けん工場スタッフ", "need": 3}, {"name": "ピザ職人", "need": 1}, {"name": "ソーセージ職人", "need": 3}, {"name": "警察官", "need": 3}, {"name": "裁判所", "need": 3}, {"name": "レンタカーのお客さん", "need": 10}, {"name": "自動車整備士", "need": 3}, {"name": "サービススタッフ", "need": 3}, {"name": "くつデザイナー", "need": 1}, {"name": "おしごと相談センター", "need": 10}, {"name": "ヘア＆メイクアップアーティスト／ヘアスタイリング", "need": 3}, {"name": "ヘア＆メイクアップアーティスト／メイクアップ", "need": 3}, {"name": "パフューマー", "need": 3}, {"name": "ガスエンジニア", "need": 3}, {"name": "歯科医院", "need": 3}, {"name": "販売員／ギフトアドバイザー", "need": 3}, {"name": "販売員／接客", "need": 3}, {"name": "通信エリア設計士", "need": 3}, {"name": "ゲームクリエイター", "need": 1}, {"name": "サラダシェフ", "need": 3}, {"name": "花屋のお客さん", "need": 1}, {"name": "はんこ屋のお客さん", "need": 1}, {"name": "画材屋のお客さん", "need": 1}, {"name": "銀行員", "need": 3}, {"name": "セールスドライバー", "need": 1}, {"name": "警備員／警備輸送", "need": 3}, {"name": "警備員／非常対応", "need": 3}, {"name": "消防士", "need": 3}, {"name": "運転士", "need": 3}, {"name": "軌道作業員", "need": 3}, {"name": "絵の具屋のお客さん", "need": 5}, {"name": "鉛筆工場スタッフ", "need": 1}, {"name": "メガネショップのお客さん", "need": 1}, {"name": "プリント工房のお客さん", "need": 1}, {"name": "家電コンシェルジュ", "need": 3}, {"name": "編集者／絵本", "need": 3}, {"name": "編集者／図鑑", "need": 3}, {"name": "ミルクスイーツ開発者", "need": 1}, {"name": "CMタレント", "need": 3}, {"name": "パフォーマー", "need": 1}, {"name": "スポーツクラブ／テニス", "need": 3}], "experts": [{"name": "劇場", "jobs": ["ファッションモデル", "エンターテイナー／お笑いタイプ", "バレエダンサー"]}, {"name": "建設機械開発センター", "jobs": ["建設機械開発者／油圧ショベル", "建設機械開発者／ブルドーザー"]}, {"name": "優良運転者への道", "jobs": ["教習生", "レンタカーのお客さん"]}, {"name": "スポーツクラブ", "jobs": ["スポーツクラブ／テニス", "スポーツクラブ／チアリーディング", "スポーツクラブ／ヒップホップ"]}, {"name": "フードストア", "jobs": ["キッチンスタッフ", "パン職人", "ソーセージ職人", "サラダシェフ"]}, {"name": "コミュニケーション", "jobs": ["商社パーソン", "おしごと相談センター", "編集者／絵本", "編集者／図鑑"]}, {"name": "ビューティスタジオ", "jobs": ["ヘア＆メイクアップアーティスト／ヘアスタイリング", "ヘア＆メイクアップアーティスト／メイクアップ", "パフューマー"]}, {"name": "マンション建設現場", "jobs": ["マンション管理技術者／排水管の点検", "マンション管理技術者／外壁パネルの交換", "マンション建設技術者"]}, {"name": "デパート", "jobs": ["販売員／接客", "販売員／ディスプレイ", "販売員／ギフトアドバイザー"]}, {"name": "ファクトリー", "jobs": ["お菓子工場スタッフ", "鉛筆工場スタッフ", "ソーセージ職人", "くつデザイナー", "げんし工場スタッフ"]}, {"name": "メディア", "jobs": ["ファッションモデル", "ウェイティングスタッフ", "CMタレント"]}, {"name": "セキュリティ", "jobs": ["警察官", "裁判所", "警備員", "消防士", "救命救急室"]}, {"name": "商店街", "jobs": ["花屋のお客さん", "はんこ屋のお客さん", "画材屋のお客さん"]}, {"name": "警備センター", "jobs": ["警備員／警備輸送", "警備員／非常対応"]}, {"name": "地下鉄", "jobs": ["運転士", "軌道作業員"]}, {"name": "カーエリア", "jobs": ["教習生", "レンタカーのお客さん", "自動車整備士", "サービススタッフ"]}, {"name": "ライド", "jobs": ["ガスエンジニア", "セールスドライバー", "消防士", "救命救急室"]}, {"name": "エクスペリエンス", "jobs": ["花屋のお客さん", "はんこ屋のお客さん", "画材屋のお客さん", "乗馬体験"]}, {"name": "ホテル", "jobs": ["ホテルエ", "メイクスタッフ", "パントリースタッフ"]}, {"name": "出版社", "jobs": ["編集者／絵本", "編集者／図鑑"]}, {"name": "病院", "jobs": ["開腹手術室", "胸腔鏡手術室", "新生児室", "救命救急室", "薬局"]}, {"name": "デベロップメント", "jobs": ["冷凍食品開発者", "ケーキクリエイター", "ミルクスイーツ開発者"]}, {"name": "飛行機", "jobs": ["パイロット", "キャビンアテンダント"]}, {"name": "ホースセンター", "jobs": ["獣医師", "乗馬体験", "アシスタントトレーナー"]}]};
+const DEFAULT_CHILDREN = ['桃香','カイト'];
+let family=JSON.parse(localStorage.getItem('kz_family')||'null');
+if(!family){
+  family={active:'桃香',children:{
+    '桃香':{counts:{},activityTotal:0},
+    'カイト':{counts:{},activityTotal:0}
+  }};
+  localStorage.setItem('kz_family',JSON.stringify(family));
+}
+function state(){return family.children[family.active]}
+function save(){localStorage.setItem('kz_family',JSON.stringify(family));}
+function switchChild(name){
+  if(!family.children[name]) return;
+  family.active=name; save(); render();
+}
+function addChild(){
+  const name=prompt('追加するお子さんの名前');
+  if(!name || family.children[name.trim()]) return;
+  const n=name.trim();
+  family.children[n]={counts:{},activityTotal:0};
+  family.active=n; save(); render();
+}
+function refreshChildSelect(){
+  const s=document.getElementById('childSelect');
+  if(!s) return;
+  s.innerHTML=Object.keys(family.children).map(n=>`<option value="${esc(n)}">${esc(n)}</option>`).join('');
+  s.value=family.active;
+}
+function esc(s){return s.replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;')}
+function count(n){return state().counts[n]||0}
+function pct(a,b){return Math.min(100,Math.round(a/b*100))}
+function add(n){
+  const s=state();
+  s.counts[n]=(s.counts[n]||0)+1;
+  s.activityTotal++;
+  save();render()
+}
+function sub(n){
+  const s=state();
+  if((s.counts[n]||0)>0){
+    s.counts[n]--;
+    s.activityTotal=Math.max(0,s.activityTotal-1);
+  }
+  save();render()
+}
+function expertProgress(e){return {basic:e.jobs.filter(j=>count(j)>=1).length,senior:e.jobs.filter(j=>count(j)>=3).length}}
+function render(){refreshChildSelect(); let page=window.page||'home'; if(page==='home')home(); if(page==='pro')pro(); if(page==='exp')exp()}
+function home(){
+ let near=DATA.proacts.map(p=>({...p,now:count(p.name),left:Math.max(0,p.need-count(p.name))}))
+   .filter(x=>x.left>0).sort((a,b)=>recommendationScore(b)-recommendationScore(a)).slice(0,5);
+ let nearE=DATA.experts.map(e=>({...e,done:expertProgress(e)}))
+   .filter(e=>e.done<e.jobs.length).sort((a,b)=>(b.done/b.jobs.length)-(a.done/a.jobs.length)).slice(0,4);
+ let total=state().activityTotal;
+ let best=near[0];
+ document.getElementById('app').innerHTML=`
+ <div class="card hero">
+   <div class="muted">👤 ${esc(family.active)} の記録</div>
+   <div class="big">${total} <span class="small">回</span></div>
+   <div class="small">アクティビティカウント：次の100回まであと ${100-(total%100)}回</div>
+ </div>
+ ${best?`<div class="card" style="border:2px solid var(--orange)">
+   <div class="muted">🔥 今日いちばんおすすめ</div>
+   <div class="row" style="margin-top:5px">
+     <div class="grow"><div class="name" style="font-size:19px">${esc(best.name)}</div>
+     <div class="small">プロアクトまであと <b>${best.left}回</b></div>
+     <div class="small">これをやると、進行中の称号もまとめて進みます。</div></div>
+     <button class="plus" onclick="add('${esc(best.name).replaceAll("'","\\\\'")}')">＋</button>
+   </div>
+ </div>`:''}
+ <div class="grid">
+   <div class="stat"><span class="small">プロアクト達成</span><b>${DATA.proacts.filter(x=>count(x.name)>=x.need).length}</b><span class="small">/ ${DATA.proacts.length}</span></div>
+   <div class="stat"><span class="small">進行中の称号</span><b>${DATA.experts.filter(e=>expertProgress(e)>0&&expertProgress(e)<e.jobs.length).length}</b><span class="small">件</span></div>
+ </div>
+ <h2>🔥 次に狙いやすいプロアクト</h2>${near.map(x=>cardPro(x)).join('')}
+ <h2>🏆 もう少しで取れる称号</h2>${nearE.map(e=>cardExp(e)).join('')}
+ <div class="notice">子どもを切り替えると、それぞれの体験回数・プロアクト・称号の進捗が完全に別々に記録されます。<br><br>
+<button onclick="exportData()" style="border:0;background:#222;color:#fff;border-radius:9px;padding:8px 10px">💾 バックアップ</button>
+<button onclick="resetChild()" style="border:1px solid #ddd;background:#fff;border-radius:9px;padding:8px 10px;margin-left:5px">↺ この子をリセット</button>
+</div>`;
+}function cardPro(x){return `<div class="card"><div class="row"><div class="grow"><div class="name">${esc(x.name)}</div><div class="small">${x.now}/${x.need}回　${x.left?`あと <b>${x.left}</b>回`:'達成！'}</div><div class="bar"><div class="fill" style="width:${pct(x.now,x.need)}%"></div></div></div><button class="plus" onclick="add('${esc(x.name).replaceAll("'","\\'")}')">＋</button></div></div>`}
+function cardExp(e){let d=e.basic,s=e.senior;return `<div class="card"><div class="name">${esc(e.name)}</div><div class="small">🥇 エキスパート　${d}/${e.jobs.length}　${d===e.jobs.length?'🎉達成！':'あと '+(e.jobs.length-d)+'職種'}</div><div class="bar"><div class="fill" style="width:${pct(d,e.jobs.length)}%"></div></div><div class="small">🥈 シニアエキスパート　${s}/${e.jobs.length}　${s===e.jobs.length?'🎉達成！':'あと '+(e.jobs.length-s)+'職種を3回ずつ'}</div><div class="bar"><div class="fill" style="width:${pct(s,e.jobs.length)}%"></div></div><div class="small">${e.jobs.map(j=>count(j)>=3?'🥈 '+esc(j)+' 3/3':count(j)>=1?'🥇 '+esc(j)+' 1/3':'⬜ '+esc(j)+' 0/3').join('　')}</div></div>`}
+function pro(){
+ document.getElementById('app').innerHTML=`<div class="search"><input id="q" class="filter" placeholder="🔎 お仕事を検索…" oninput="filterPro()"></div><div id="prolist"></div>`;
+ filterPro();
+}
+function filterPro(){let q=(document.getElementById('q')?.value||'').toLowerCase();let arr=DATA.proacts.filter(p=>p.name.toLowerCase().includes(q));document.getElementById('prolist').innerHTML=arr.map(p=>{let n=count(p.name),done=n>=p.need;return `<div class="card"><div class="row"><button class="minus" onclick="sub('${esc(p.name).replaceAll("'","\\'")}')">−</button><div class="grow"><div class="name">${esc(p.name)} ${done?'<span class="done">✓</span>':''}</div><div class="small">${n}/${p.need}回　${done?'プロアクト達成！':'あと '+(p.need-n)+'回'}</div><div class="bar"><div class="fill" style="width:${pct(n,p.need)}%"></div></div></div><button class="plus" onclick="add('${esc(p.name).replaceAll("'","\\'")}')">＋</button></div></div>`}).join('')}
+function exp(){
+ document.getElementById('app').innerHTML=`<div class="search"><input id="eq" class="filter" placeholder="🔎 称号・仕事を検索…" oninput="filterExp()"></div><div id="explist"></div>`;
+ filterExp();
+}
+function filterExp(){let q=(document.getElementById('eq')?.value||'').toLowerCase();let arr=DATA.experts.filter(e=>(e.name+e.jobs.join('')).toLowerCase().includes(q));document.getElementById('explist').innerHTML=arr.map(e=>{let x=expertProgress(e),done=x.basic===e.jobs.length,senior=x.senior===e.jobs.length;return `<div class="card"><div class="sectionTitle"><div class="name">${esc(e.name)}</div><span class="${senior?'done':'pill'}">${senior?'🥈 シニア達成！':x.basic+'/'+e.jobs.length}</span></div><div class="small">🥇 エキスパート：${x.basic}/${e.jobs.length} ${done?'🎉':''}</div><div class="bar"><div class="fill" style="width:${pct(x.basic,e.jobs.length)}%"></div></div><div class="small">🥈 シニアエキスパート：${x.senior}/${e.jobs.length} ${senior?'🎉':''}</div><div class="bar"><div class="fill" style="width:${pct(x.senior,e.jobs.length)}%"></div></div>${e.jobs.map(j=>`<div class="row" style="padding:7px 0;border-top:1px solid #f0e8dd"><div class="grow">${count(j)>=3?'🥈':count(j)>=1?'🥇':'⬜'} ${esc(j)}<div class="small">${count(j)}回　（1回:エキスパート / 3回:シニア）</div></div><button class="plus" style="width:34px;height:34px;font-size:20px" onclick="add('${esc(j).replaceAll("'","\\'")}')">＋</button></div>`).join('')}</div>`}).join('')}
+function exportData(){
+  const blob=new Blob([JSON.stringify(family,null,2)],{type:'application/json'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+  a.download='kidzania-family-backup.json'; a.click(); URL.revokeObjectURL(a.href);
+}
+function resetChild(){
+  if(confirm(family.active+' の記録を全部リセットします。よろしいですか？')){
+    family.children[family.active]={counts:{},activityTotal:0}; save(); render();
+  }
+}
+function show(p){window.page=p;document.querySelectorAll('.tab').forEach((b,i)=>b.classList.toggle('active',['home','pro','exp'][i]===p));render()}
+render();
+</script>
+<script>
+if ('serviceWorker' in navigator) { window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js')); }
+</script>
+</body></html>
