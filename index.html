@@ -111,6 +111,12 @@ function sub(n){
   }
   save();render()
 }
+function recommendationScore(x){
+  // 「あと1〜3回」を最優先。残り回数が少ないほど上位にする。
+  // 称号の進行にも使われる仕事は少しだけ優先する。
+  const titleBoost=DATA.experts.some(e=>e.jobs.includes(x.name)) ? 0.2 : 0;
+  return (x.left<=3 ? (4-x.left)*10 : 0) + titleBoost;
+}
 function isSpecialDriver(e){return e.name==='優良運転者への道'}
 function expertProgress(e){
   if(isSpecialDriver(e)) return {basic:(count('教習生')>=1 && count('レンタカーのお客さん')>=10)?2:((count('教習生')>=1)?1:0),senior:0};
@@ -119,31 +125,30 @@ function expertProgress(e){
 function render(){refreshChildSelect(); let page=window.page||'home'; if(page==='home')home(); if(page==='pro')pro(); if(page==='exp')exp()}
 function home(){
  let near=DATA.proacts.map(p=>({...p,now:count(p.name),left:Math.max(0,p.need-count(p.name))}))
-   .filter(x=>x.left>0).sort((a,b)=>recommendationScore(b)-recommendationScore(a)).slice(0,5);
+   .filter(x=>x.left>0 && x.left<=3).sort((a,b)=>recommendationScore(b)-recommendationScore(a)).slice(0,5);
  let nearE=DATA.experts.map(e=>({...e,done:expertProgress(e)}))
-   .filter(e=>e.done.basic<e.jobs.length).sort((a,b)=>(b.done/b.jobs.length)-(a.done/a.jobs.length)).slice(0,4);
+   .filter(e=>e.done.basic<e.jobs.length).sort((a,b)=>(b.done.basic/b.jobs.length)-(a.done.basic/a.jobs.length)).slice(0,4);
  let total=state().activityTotal;
- let best=near[0];
  document.getElementById('app').innerHTML=`
  <div class="card hero">
    <div class="muted">👤 ${esc(family.active)} の記録</div>
    <div class="big">${total} <span class="small">回</span></div>
    <div class="small">アクティビティカウント：次の100回まであと ${100-(total%100)}回</div>
  </div>
- ${best?`<div class="card" style="border:2px solid var(--orange)">
-   <div class="muted">🔥 今日いちばんおすすめ</div>
-   <div class="row" style="margin-top:5px">
-     <div class="grow"><div class="name" style="font-size:19px">${esc(best.name)}</div>
-     <div class="small">プロアクトまであと <b>${best.left}回</b></div>
-     <div class="small">これをやると、進行中の称号もまとめて進みます。</div></div>
-     <button class="plus" onclick="add('${esc(best.name).replaceAll("'","\\\\'")}')">＋</button>
-   </div>
- </div>`:''}
+ <div class="card" style="border:2px solid var(--orange)">
+   <div class="muted">🎯 今日のおすすめ</div>
+   <div class="small" style="margin:4px 0 10px">あと3回以内で達成できるお仕事をピックアップ！</div>
+   ${near.length?near.map((x,i)=>`<div class="row" style="padding:10px 0;border-top:1px solid var(--line)">
+     <div class="grow"><div class="name" style="font-size:17px">${i===0?'🥇 ':i===1?'🥈 ':i===2?'🥉 ':''}${esc(x.name)}</div>
+     <div class="small"><b>あと ${x.left}回</b> でプロアクト達成！</div>
+     <div class="bar"><div class="fill" style="width:${pct(x.now,x.need)}%"></div></div></div>
+     <button class="plus" onclick="add('${esc(x.name).replaceAll("'","\\'")}')">＋</button>
+   </div>`).join(''):`<div class="notice">🎉 あと3回以内で達成できるお仕事はありません。プロアクト画面から次の目標を探してみよう！</div>`}
+ </div>
  <div class="grid">
    <div class="stat"><span class="small">プロアクト達成</span><b>${DATA.proacts.filter(x=>count(x.name)>=x.need).length}</b><span class="small">/ ${DATA.proacts.length}</span></div>
    <div class="stat"><span class="small">進行中の称号</span><b>${DATA.experts.filter(e=>expertProgress(e).basic>0&&expertProgress(e).basic<e.jobs.length).length}</b><span class="small">件</span></div>
  </div>
- <h2>🔥 次に狙いやすいプロアクト</h2>${near.map(x=>cardPro(x)).join('')}
  <h2>🏆 もう少しで取れる称号</h2>${nearE.map(e=>cardExp(e)).join('')}
  <div class="notice">子どもを切り替えると、それぞれの体験回数・プロアクト・称号の進捗が完全に別々に記録されます。<br><br>
 <button onclick="exportData()" style="border:0;background:#222;color:#fff;border-radius:9px;padding:8px 10px">💾 バックアップ</button>
