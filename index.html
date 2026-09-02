@@ -147,7 +147,7 @@ function home(){
  </div>
  <div class="grid">
    <div class="stat"><span class="small">プロアクト達成</span><b>${DATA.proacts.filter(x=>count(x.name)>=x.need).length}</b><span class="small">/ ${DATA.proacts.length}</span></div>
-   <div class="stat"><span class="small">進行中の称号</span><b style="font-size:20px;letter-spacing:2px">${DATA.experts.map(e=>expertProgress(e).senior===e.jobs.length?'●':'○').join('')}</b><span class="small">シニアエキスパート ${DATA.experts.filter(e=>expertProgress(e).senior===e.jobs.length).length} / ${DATA.experts.length} 達成</span></div>
+   <div class="stat"><span class="small">進行中の称号</span><b style="font-size:20px">${DATA.experts.filter(e=>expertProgress(e).senior===e.jobs.length).length} / ${DATA.experts.length}</b><span class="small">シニアエキスパート達成数</span></div>
  </div>
  <h2>🏆 もう少しで取れる称号</h2>${nearE.map(e=>cardExp(e)).join('')}
  <div class="notice">子どもを切り替えると、それぞれの体験回数・プロアクト・称号の進捗が完全に別々に記録されます。<br><br>
